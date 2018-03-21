@@ -1,14 +1,11 @@
 
 
-				PRELUCRARE DE IMAGINI FOLOSIND
-					RETELE MPI
+							PRELUCRARE DE IMAGINI FOLOSIND
+								RETELE MPI
 
-	Programul realizeaza aplicarea distribuita a doua filtre asupra unor imagini 
-gray-scale in format PGM. Cele doua filtre aplicate sunt sobel si mean removal. 
-Procesele care prelucreaza imaginile sunt modelate intr-o topologie de tip arbore care 
-este data ca intrare programului printr-un fisier.
-	Procesul de prelucrare este realizat de procesele frunza ale arborelui. 
-Pixelii sunt impartiti intre procesele frunza si dupa aplicarea filtrului imaginea 
-este reconstruita in nodul radacina. De asemenea, programul realizeaza si o statistica 
-a liniilor de pixeli prelucrare de fiecare nod pe care o scrie intr-un fisier la 
-terminarea programului. 
+	Programul realizeaza aplicarea distribuita a doua filtre asupra unor imagini gray-scale in format PGM. Cele doua filtre aplicate 
+sunt sobel si mean removal. Procesele care prelucreaza imaginile sunt modelate intr-o topologie de tip arbore care este data ca intrare 
+programului printr-un fisier.
+	Procesul de prelucrare este realizat de procesele frunza ale arborelui. Pixelii sunt impartiti intre procesele frunza si dupa 
+aplicarea filtrului imaginea este reconstruita in nodul radacina. De asemenea, programul realizeaza si o statistica a liniilor de pixeli 
+prelucrare de fiecare nod pe care o scrie intr-un fisier la terminarea programului. 
