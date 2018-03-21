@@ -1,96 +1,10 @@
-##########################################################################################################################
-
-							PRELUCRARE DE IMAGINII
-								FOLOSIND RETELE MPI
-
-##########################################################################################################################
 
 
-	Programul de aplicare a celor doua filtre este format din doua fisiere sursa. Fisierul main.c contine implementarile 
-functiile read_topology si main. Fisierul functions.c contine o serie de functii care citesc valorile pixelilor fiecarei 
-imaginei, le impart intre procesele frunza, le prelucreaza, le scriu intr-un alt fisier si calculeaza statistica liniilor 
-prelucrate de fiecare proces.
+	PRELUCRARE DE IMAGINI FOLOSIND RETELE MPI
 
-	-> main
-
-	In functia main fiecare proces declara un vector in care va memora cu ce procese poate comunica in topologia data in 
-fisierul de intrare. Pentru prelucrarea fisierului cu topologia este apelata functia read_topology. Dupa aceea este apelata 
-functia apply_filters, care aplica filtrele pe imagini si calculeaza statistica ceruta.
-
-	-> read_topology
-
-	Aceasta functie primeste ca parametri numele fisierului cu topologia, un pointer la vectorul cu vecini(neighbors), 
-rangul procesului care o apeleaza si numarul total de procese din topologie. In functie este deschis fisierul cu topologia 
-si fiecare proces se plaseaza pe linia corespunzatoare rangului si citeste rangurile vecinilor din topologie. Procesele 
-vecine unui anumit proces sunt salvate in vectorul neighbors al procesului.
-
-	-> apply_filters
-
-	Aceasta functie primeste ca parametri numele fisierului cu imaginile de prelucrat, vectorul de vecini, rangul 
-procesului care apeleaza functia, numarul total de procese si numele fisierului in care trebuie scrisa statistica finala. 
-In functie procesul cu rangul zero deschide fisierul cu imaginile de prelucrat si citeste numarul de imagini de prelucrat.
-Mai departe procesul cu rangul zero executa urmatoarele sarcini pentru fiecare imagine ce trebuie prelucrata: citeste din 
-fisier filtrul ce trebuie aplicat, citeste numele imaginii ce trebuie prelucrata, citeste numele imaginii obtinute dupa 
-prelucrarea celei initiale, deschide imaginea ce trebuie prelucrata, apeleaza functia image_header care prelucreaza headerul 
-imaginii date ca parametru, apeleaza functia scatter_filter_pixels care distribuie pixelii de prelucrat catre frunzele 
-arborelui care da topologia si returneaza numarul de linii prelucrate de procesul apelant, aduna numarul de linii returnate 
-la numarul de linii prelucrare la apelurile precedente ale functiei. Procesele care nu au rangul zero apeleaza functia 
-scatter_filter_pixels intr-o bucla while pana cand primesc de la parinte semnalul de terminare a procesului de prelucrare 
-de imagini, reprezentat printr-o anumita valoare a tag-ului unui mesaj primit. Dupa terminarea procesarii imaginilor toate 
-procesele apeleaza functia statistics care scrie in fisierul de iesire statistica liniilor prelucrate de fiecare proces.
-
-	-> image_header
-
-	Functia primeste ca parametri un pointer catre imaginea curenta care este prelucrata de program, un pointer catre 
-noua imagine care se obtine dupa prelucrare si doi pointeri in care functia sa salveze numarul de pixeli de pe linia imaginii 
-si numarul de linii ale imaginii de prelucrat. Functia citeste din imaginea de prelucrat primele 2 linii si le copiaza in 
-imaginea nou deoarece ele reprezinta numele formatului imaginii si un comentariu conform formatului dat de gimp in urma 
-convertirii unei imagini in format pgm. Dupa aceea citeste de pe urmatoarele doua linii ale fisierului numarul de pixeli de 
-pe o linie a imaginii, numarul de linii ale imaginii si valoarea maxima pe care un pixel poate sa o ia.
-
-	-> scatter_filter_pixels
-
-	In aceasta functie procesul cu rangul zero identifica filtrul ce trebuie aplicat imaginii, citeste valorile tuturor 
-pixelilor imaginii si construieste doi vectori care vor fi bordura superioara si bordura inferioara a matricei pixelilor si 
-vor fi initializati cu 0. Mai departe procesele cu rangul diferit de zero vor astepta sa primeasca pixelii pe care trebuie sa 
-ii distribuie mai departe catre procesele frunza sau sa ii prelucreaza daca aceste procese sunt procese frunza in cadrul 
-topologiei. De asemenea pe langa pixelii de prelucrat procesele primesc si doua linii de pixeli in plus pentru a putea aplica 
-filtrele si pe pixelii din margine. Dupa ce un proces trece de primul if al functiei numara copiii acestuia conform topologiei. 
-Mai departe in functie de numarul de copii fiecare proces stie daca este proces frunza sau nu. Daca nu este proces frunza, 
-atunci apeleaza functiile scatter_pixels si gather_pixels care distribuie si aduna liniile imaginii la si de la copii. 
-Frunzele apeleaza functiile filter_pixels si send_pixels care aplica un anumit filtru pe pixeli si trimit noile valori ale 
-pixelilor parintilor. La final este eliberata memoria.
-
-	-> scatter_pixels
-
-	In aceasta functie procesul care o apeleaza initial imparte numarul de linii pe care il are la numarul de copii si 
-trimite fiecarul copil pe rand liniile ce i-au fost atribuite. Daca numarul de linii nu se imparte exact restul de linii 
-ramase in urma impartisii sunt trimise ultimului copil al procesului apelant.
-
-	-> filter_pixels
-
-	In aceasta functie un proces apelant aplica filtrul dat de tag-ul mesajelor anterioare liniilor ce i-au fost date 
-spre prelucrare de procesul parinte.
-
-	-> send_pixels
-
-	Aceasta functie trimite un numar de linii de pixeli dat procesului care ii este parinte procesului apelant.
-
-	-> gather_pixels
-
-	In aceasta functie fiecare proces care o apeleaza asteapta sa primeasca linii cu pixelii prelucrari de procesele 
-frunza si le trimit mai departe la procesul parinte. Daca procesul apelant este insa procesul cu rangul 0, atunci dupa 
-ce aduna toti pixelii ce formeaza noua imagine ii scrie in fisier.
-
-	-> statistics
-
-	Aceasta functie creaza un vector cu numarul de linii procesat de fiecare proces. Dupa completarea acestui tabel de 
-fiecare proces cu numarul de linii prelucrate si trimiterea tabelului catre procesul cu rangul 0 acesta scrie in fisierul 
-de iesire statistica finala.
-
-############################################################################################################################################
-
-
-
-
-
+	Programul realizeaza aplicarea distribuita a doua filtre asupra unor imagini gray-scale in format PGM. Cele doua filtre aplicate 
+sunt sobel si mean removal. Procesele care prelucreaza imaginile sunt modelate intr-o topologie de tip arbore care este data ca intrare 
+programului printr-un fisier.
+	Procesul de prelucrare este realizat de procesele frunza ale arborelui. Pixelii sunt impartiti intre procesele frunza si dupa 
+aplicarea filtrului imaginea este reconstruita in nodul radacina. De asemenea, programul realizeaza si o statistica a liniilor de pixeli 
+prelucrare de fiecare nod pe care o scrie intr-un fisier la terminarea programului. 
